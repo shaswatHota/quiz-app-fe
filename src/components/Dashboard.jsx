@@ -6,9 +6,55 @@ import { GoTrophy } from "react-icons/go";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import { RxPerson } from "react-icons/rx";
 import { IoSettingsOutline } from "react-icons/io5";
+import { useEffect, useState } from "react";
+import api from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 
 function Dashboard() {
+
+  const [stats , setStats]=useState();
+  const navigate = useNavigate();
+
+
+useEffect(()=>{
+  api.get("/stats")
+  .then(res => setStats(res.data))
+  .catch(err => console.error("Fetch error:", err));
+  
+},[])
+
+  function startQuiz(){
+    api.post("/quiz/start",{category: 'general'})
+    .then(res=>{
+      const quizId = res.data.quizId;
+      console.log(quizId)
+     navigate(`/questions/${quizId}`);
+    })
+    .catch(err => {
+      console.error("Failed to start quiz:", err);
+    });
+  }
+
+
+ function handleButtons(button){
+  switch(button){
+    case 'start-quiz' : 
+      return startQuiz();   
+    case 'categories' :
+      return navigate('/categories');
+    case 'leaderboard' :
+      return navigate('/leaderboard');
+    case 'guidelines' :
+      return navigate('/guidelines');
+    case 'profile' :
+      return navigate('/profile');
+    case 'settings' :
+      return navigate('/settings');
+    
+  }
+ }
+  
   
   return (
     <div className="flex flex-col p-6">
@@ -34,7 +80,7 @@ function Dashboard() {
       </header>
       <div className='flex flex-col grow justify-center items-center space-y-6 pb-8' >
           <div className='flex flex-wrap justify-center gap-6'>
-            <Button from='from-yellow-400' via='via-yellow-500' to='to-yellow-600'className='text-white' >
+            <Button from='from-yellow-400' via='via-yellow-500' to='to-yellow-600'className='text-white' onClick={()=>handleButtons('start-quiz')} >
                 
                     <VscDebugStart className=" text-6xl  ml-4 drop-shadow-lg " />
 
@@ -43,7 +89,7 @@ function Dashboard() {
                     <div className="font-bold text-2xl"> Start Quiz </div><br /> <p>test your general knowledge </p>
                 </div>
             </Button>
-            <Button from='from-white' via='via-gray-50' to='to-white' className='text-black' >
+            <Button from='from-white' via='via-gray-50' to='to-white' className='text-black'  onClick={()=>handleButtons('categories')} >
                 <div>
                     <FiBookOpen  className=" text-6xl  ml-4 drop-shadow-lg" />
 
@@ -52,7 +98,7 @@ function Dashboard() {
                     <div className="font-bold text-2xl"> Categories </div><br /> <p>test your general knowledge </p>
                 </div>
             </Button>
-            <Button from='from-yellow-400' via='via-yellow-500' to='to-yellow-600' className='text-white' >
+            <Button from='from-yellow-400' via='via-yellow-500' to='to-yellow-600' className='text-white'  onClick={()=>handleButtons('leaderboard')}>
                 <div>
                     <GoTrophy className=" text-6xl  ml-4 drop-shadow-lg" />
 
@@ -63,7 +109,7 @@ function Dashboard() {
             </Button>
           </div>
           <div className="flex flex-wrap justify-center gap-6">
-            <Button from='from-white' via='via-gray-50' to='to-white' className='text-black' >
+            <Button from='from-white' via='via-gray-50' to='to-white' className='text-black'  onClick={()=>handleButtons('guidelines')}>
                 <div>
                     <IoDocumentTextOutline className=" text-6xl  ml-4 drop-shadow-lg"  />
 
@@ -72,7 +118,7 @@ function Dashboard() {
                     <div className="font-bold text-2xl"> GuideLines </div><br /> <p>test your general knowledge </p>
                 </div>
             </Button>
-            <Button from='from-yellow-400' via='via-yellow-500' to='to-yellow-600' className='text-white' >
+            <Button from='from-yellow-400' via='via-yellow-500' to='to-yellow-600' className='text-white'  onClick={()=>handleButtons('profile')}>
                 <div>
                     <RxPerson className=" text-6xl  ml-4 drop-shadow-lg" />
 
@@ -81,7 +127,7 @@ function Dashboard() {
                     <div className="font-bold text-2xl"> Profile </div><br /> <p>test your general knowledge </p>
                 </div>
             </Button>
-            <Button from='from-white' via='via-gray-50' to='to-white' className='text-black' >
+            <Button from='from-white' via='via-gray-50' to='to-white' className='text-black'  onClick={()=>handleButtons('settings')}>
                 <div>
                     <IoSettingsOutline className=" text-6xl  ml-4 drop-shadow-lg" />
 
@@ -99,25 +145,33 @@ function Dashboard() {
                 Quick Stats
             </div>
             <div className='flex justify-between'>
-              <div className='flex flex-col pl-8'>
-                  <div className="text-yellow-400 text-2xl">
-                    NaN
+             {!stats ? (
+                <div className="text-yellow-300">Loading...</div>
+              ) : (
+                <div className='flex flex-col pl-8'>
+                  <div className="text-yellow-400 text-2xl flex justify-center">
+                    {stats.stats.totalScore}
                   </div>
                   <div className="text-gray-400 text-md font-semibold">
-                    Questions <br />
-                    Answered
+                    Total Score
                   </div>
-              </div>
-              <div className='flex flex-col'>
-                  <div className="text-yellow-400 text-2xl">
-                    NaN
+                </div>
+              )}
+              {!stats ? (
+                  <div className="text-yellow-300">Loading...</div>
+                ) : (
+                  <div className='flex flex-col pr-8'>
+                    <div className="text-yellow-400 text-2xl flex justify-center">
+                      {stats.stats.accuracy}
+                    </div>
+                    <div className="text-gray-400 text-md font-semibold">
+                      Accuracy
+                    </div>
                   </div>
-                  <div className="text-gray-400 text-md font-semibold">
-                    Accuracy
-                  </div>
-              </div>
+                )}
+              
               <div className='flex flex-col pr-8'>
-                  <div className="text-yellow-400 text-2xl">
+                  <div className="text-yellow-400 text-2xl flex justify-center">
                     NaN
                   </div>
                   <div className="text-gray-400 text-md font-semibold">
