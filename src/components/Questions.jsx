@@ -3,16 +3,19 @@ import Options from "./Options";
 import { IoMdArrowBack } from "react-icons/io";
 import api from "../services/api";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 function Questions(){
 
     const [category,setCategory] = useState();
     const [question,setQuestion] = useState();
-    const {quizId} = useParams();
+    let {quizId} = useParams();
     const allCategories = ['art & literature', 'sports', 'science', 'entertainment', 'technology'];
     const [selectedOpt, setSelectedOpt] = useState(null);
     const [optLocked,setOptLocked] = useState(false);
+    const [timer,setTimer] = useState(30);
+    const [timesUp,setTimesUp]= useState(false);
+    const navigate = useNavigate();
 
 
     useEffect(() => {
@@ -37,20 +40,46 @@ function Questions(){
         
     
     function handleOptClick(option){
-        if (optLocked) return;        // prevent changing after first click
-        setSelectedOpt(option);       // mark selected
+        if (optLocked) return;        
+        setSelectedOpt(option);       
         setOptLocked(true);   
 
     }
+    
+     useEffect(() => {
+    if (timer === 0) {
+      setTimesUp(true);
+      return; 
+    }
 
+    const clock = setInterval(() => {
+      setTimer(c => c - 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(clock);
+    };
+  }, [timer]);
+
+  
+function onBack(){
+    navigate('/dashboard')
+    quizId=null;
+    
+}
 
 
 return(
 <div className="p-6 text-white flex flex-col space-y-6" >
-    <div className="flex justify-evenly text-sm md:text-xl ">
-        <span className="flex flex-row space-x-3">
-            <div className="text-xl md:text-3xl"> <IoMdArrowBack/></div>
+    <div className="flex justify-evenly text-sm md:text-md font-semibold ">
+        <span >
+            <button 
+                className="hover:text-yellow-400 flex items-center flex-row space-x-3 hover:cursor-pointer group"
+                onClick={onBack}
+            >
+            <div className="text-lg md:text-2xl transition-all duration-300 group-hover:-translate-x-1"> <IoMdArrowBack/></div>
             <div className="hidden md:block"> BACK TO DASHBOARD</div>
+            </button>
         </span>
         <span>QUESTION 1 OF 20</span>
         <span>SCORE 0</span>
@@ -63,21 +92,21 @@ return(
                     <FaRegClock className="text-4xl text-yellow-400  "/>
                 </div>
                 <div className="font-bold text-5xl md:text-6xl flex justify-center bg-clip-text text-transparent bg-gradient-to-br from-yellow-400 to-yellow-600">
-                    NA
+                      {timer}
                 </div>
                 <div className="font-semibold text-sm text-gray-400 flex justify-center mb-6">
-                    SECONDS REMAINING
+                    {timesUp ? "TIME'S UP!" : "SECONDS REMAINING"}
                 </div>
                 <div className=" py-1.5 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-600 ">
                     {/* timer bar */}
                 </div>
             </div>
             <div className="hidden lg:flex justify-center ">
-                    <div className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl w-3xs text-black">
+                    <div className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl w-3xs text-black hover:cursor-pointer">
                             NEXT QUESTION
                     </div>
             </div>
-        </div>
+        </div>        
 
         <div className="flex flex-col space-y-6 border border-yellow-400/20 bg-black/40 rounded-3xl w-full p-10 mr-0 lg:mr-34" >
             <div className="text-sm font-semibold flex items-center">
@@ -136,7 +165,31 @@ return(
                     </div>
     </div>
 
+    {timesUp&&(<div className="fixed inset-0 flex justify-center items-center bg-black/80 backdrop-blur-sm">
 
+       <div className=" bg-gradient-to-br from-black via-gray-900 to-black border border-red-500/20 rounded-3xl p-8 md:p-12 shadow-xl text-white max-w-md w-full text-center ">
+        
+
+        <div className="relative flex justify-center mb-6">
+          <FaRegClock className="text-5xl text-red-400 animate-pulse" />
+          <div className="absolute inset-0 w-20 h-20 bg-red-400/20 rounded-full blur-xl mx-auto"></div>
+        </div>
+
+        
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-2">TIME'S UP!</h1>
+
+        
+        <p className="text-gray-400 mb-6">Don't worry, let's move on to the next challenge.</p>
+
+        
+        <button
+          
+          className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-black font-semibold px-6 py-3 rounded-2xl hover:brightness-110 transition-all w-full"
+        >
+          NEXT QUESTION
+        </button>
+      </div>
+    </div>)}
 </div>
 )
 }
