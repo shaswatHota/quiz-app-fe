@@ -146,7 +146,7 @@ useEffect(()=>{
             </div>
             <div className='flex justify-between'>
              {!stats ? (
-                <div className="text-yellow-300 flex pl-4">Loading...</div>
+                <div className="text-yellow-300">Loading...</div>
               ) : (
                 <div className='flex flex-col pl-8'>
                   <div className="text-yellow-400 text-2xl flex justify-center">

@@ -41,12 +41,12 @@ function Questions(){
     .then(res => {
       if (isMounted && res.data.question) {
         setQuestion(res.data.question);
-        setTimer(totalTime); 
-        setTimesUp(false);  
-        setOptLocked(false);
+        setTimer(totalTime); // reset timer on question load
+        setTimesUp(false);   // reset TIME'S UP screen
+        setOptLocked(false); // unlock options
         setSelectedOpt(null);
       } else {
-        
+        // Quiz is over, navigate to results
         localStorage.removeItem("score");
         localStorage.removeItem("queCount");
         navigate(`/quiz/result/${quizId}`);
@@ -104,21 +104,21 @@ useEffect(() => {
 function nextQue() {
   if (!question) return;
 
-  
+  // Submit the answer to backend
   api.post(`/quiz/answer/${quizId}`, {
     questionId: question.id,
-    answer: selectedOpt 
+    answer: selectedOpt // can be null if skipped
   })
     .then((res) => {
       if (res.data.result) console.log(res.data.result);
       if (res.data.finalStats) {
-          setScore(res.data.finalStats.score);
+          setScore(res.data.finalStats.score); // get final score
           localStorage.removeItem("score");
           localStorage.removeItem("queCount");
           navigate(`/quiz/result/${quizId}`);
         } else {
           if (res.data.yourScore !== undefined) {
-            setScore(res.data.yourScore); 
+            setScore(res.data.yourScore); // ✅ update score from backend
           }
           setQueCount(prev => prev + 1);
         }
