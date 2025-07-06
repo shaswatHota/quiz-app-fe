@@ -2,7 +2,7 @@ import { FaRegClock } from "react-icons/fa6";
 import Options from "./Options";
 import { IoMdArrowBack } from "react-icons/io";
 import api from "../services/api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 function Questions(){
@@ -14,9 +14,19 @@ function Questions(){
     const [selectedOpt, setSelectedOpt] = useState(null);
     const [optLocked,setOptLocked] = useState(false);
     const [timer,setTimer] = useState(30);
+    const timerId = useRef(null);
     const [timesUp,setTimesUp]= useState(false);
     const navigate = useNavigate();
-
+    const totalTime = 30;
+    const [score, setScore] = useState(() => {
+    const saved = localStorage.getItem("score");
+    return saved ? parseInt(saved) : 0;
+    });
+    const [queCount, setQueCount] = useState(() => {
+    const storedQueCount  = localStorage.getItem("queCount");
+    return storedQueCount  ? parseInt(storedQueCount ) : 1;
+    });
+    
 
     useEffect(() => {
     api.get('/quiz/categories')
@@ -27,46 +37,100 @@ function Questions(){
       useEffect(() => {
     let isMounted = true;
 
-    api.get(`/quiz/${quizId}/next-question`)
-      .then(res => {
-        if (isMounted) setQuestion(res.data.question);
-      })
-      .catch(err => {
-        if (isMounted) console.error("Fetch error:", err);
-      });
+     api.get(`/quiz/${quizId}/next-question`)
+    .then(res => {
+      if (isMounted && res.data.question) {
+        setQuestion(res.data.question);
+        setTimer(totalTime); // reset timer on question load
+        setTimesUp(false);   // reset TIME'S UP screen
+        setOptLocked(false); // unlock options
+        setSelectedOpt(null);
+      } else {
+        // Quiz is over, navigate to results
+        localStorage.removeItem("score");
+        localStorage.removeItem("queCount");
+        navigate(`/quiz/result/${quizId}`);
+      }
+    })
+    .catch(err => {
+      if (isMounted) console.error("Fetch error:", err);
+    });
 
-        return () => { isMounted = false };
-    }, [quizId]);
+  return () => { isMounted = false };
+}, [quizId, queCount]);
+
         
     
     function handleOptClick(option){
         if (optLocked) return;        
         setSelectedOpt(option);       
         setOptLocked(true);   
-
+        clearInterval(timerId.current);
     }
     
-     useEffect(() => {
-    if (timer === 0) {
-      setTimesUp(true);
-      return; 
-    }
+    useEffect(() => {
+  if (timer === 0) {
+    setTimesUp(true);
+    return;
+  }
 
-    const clock = setInterval(() => {
-      setTimer(c => c - 1);
-    }, 1000);
+  timerId.current = setInterval(() => {
+    setTimer(c => c - 1);
+  }, 1000);
 
-    return () => {
-      clearInterval(clock);
-    };
-  }, [timer]);
+  return () => {
+    clearInterval(timerId.current);
+  };
+}, [timer]);
+
+
+  const progress = (timer/totalTime)*100
 
   
 function onBack(){
     navigate('/dashboard')
     quizId=null;
+    localStorage.removeItem('queCount');
+    localStorage.removeItem('score');
     
 }
+
+useEffect(() => {
+  localStorage.setItem("score", score.toString());
+  localStorage.setItem("queCount", queCount.toString());
+}, [score,queCount]);
+
+
+function nextQue() {
+  if (!question) return;
+
+  // Submit the answer to backend
+  api.post(`/quiz/answer/${quizId}`, {
+    questionId: question.id,
+    answer: selectedOpt // can be null if skipped
+  })
+    .then((res) => {
+      if (res.data.result) console.log(res.data.result);
+      if (res.data.finalStats) {
+          setScore(res.data.finalStats.score); // get final score
+          localStorage.removeItem("score");
+          localStorage.removeItem("queCount");
+          navigate(`/quiz/result/${quizId}`);
+        } else {
+          if (res.data.yourScore !== undefined) {
+            setScore(res.data.yourScore); // ✅ update score from backend
+          }
+          setQueCount(prev => prev + 1);
+        }
+
+    })
+    .catch(err => {
+      console.error("Error submitting answer:", err);
+    });
+}
+
+let bgColor = "from-yellow-400 to-yellow-600";
+if(progress < 17) bgColor= "from-red-400 to-red-600"
 
 
 return(
@@ -81,30 +145,38 @@ return(
             <div className="hidden md:block"> BACK TO DASHBOARD</div>
             </button>
         </span>
-        <span>QUESTION 1 OF 20</span>
-        <span>SCORE 0</span>
+        <span>QUESTION {queCount} OF 20</span>
+        <span>SCORE {score}</span>
 
     </div>
     <div className="flex justify-center flex-col lg:flex-row space-x-12 p-6">
         <div className="flex flex-col space-y-6 ml-0 xl:ml-32">
             <div className="flex flex-col border border-yellow-400/20 bg-black/40 rounded-3xl p-7 md:p-12 space-y-3">
                 <div className="flex justify-center mb-3 md:mb-6">
-                    <FaRegClock className="text-4xl text-yellow-400  "/>
+                    <FaRegClock className={`text-4xl ${progress<17?'text-red-400 animate-pulse duration-150':'text-yellow-400 animate-none duration-1000'} `}/>
                 </div>
-                <div className="font-bold text-5xl md:text-6xl flex justify-center bg-clip-text text-transparent bg-gradient-to-br from-yellow-400 to-yellow-600">
+                <div className={`font-bold text-5xl md:text-6xl flex justify-center bg-clip-text text-transparent bg-gradient-to-br ${bgColor} transition-all ease-linear `}>
                       {timer}
                 </div>
                 <div className="font-semibold text-sm text-gray-400 flex justify-center mb-6">
                     {timesUp ? "TIME'S UP!" : "SECONDS REMAINING"}
                 </div>
-                <div className=" py-1.5 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-600 ">
-                    {/* timer bar */}
-                </div>
+                <div className="bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-2xl">
+                  <div
+                  className={`py-1.5 rounded-2xl bg-gradient-to-br ${bgColor} transition-all duration-1000 ease-linear`}
+                    style={{ width: `${progress}%` }}
+                  />
+                 </div>
+                    
+                
             </div>
             <div className="hidden lg:flex justify-center ">
-                    <div className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl w-3xs text-black hover:cursor-pointer">
+                    <button
+                     className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 hover:brightness-110 rounded-2xl w-3xs text-black hover:cursor-pointer"
+                     onClick={nextQue}
+                    >
                             NEXT QUESTION
-                    </div>
+                    </button>
             </div>
         </div>        
 
@@ -160,7 +232,7 @@ return(
 
     </div>
     <div className="flex justify-center lg:hidden ">
-         <div className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl w-3xs text-black">
+         <div className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 hover:brightness-110 rounded-2xl w-3xs text-black">
                             NEXT QUESTION
                     </div>
     </div>
@@ -184,7 +256,7 @@ return(
         
         <button
           
-          className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-black font-semibold px-6 py-3 rounded-2xl hover:brightness-110 transition-all w-full"
+          className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-black font-semibold px-6 py-3 rounded-2xl hover:brightness-110 transition-all w-full hover:cursor-pointer"
         >
           NEXT QUESTION
         </button>

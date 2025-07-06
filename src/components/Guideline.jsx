@@ -65,7 +65,7 @@ const Guidelines = () => {
         <div className="flex items-center mb-12">
           <button
             onClick={()=>navigate('/dashboard')}
-            className="flex items-center text-white hover:text-yellow-400 transition-colors duration-300 mr-8 group"
+            className="flex items-center text-white hover:text-yellow-400 transition-colors duration-300 mr-8 group hover:cursor-pointer"
           >
             <IoArrowBack className="w-5 h-5 mr-2 group-hover:translate-x-[-4px] transition-transform duration-300" />
             <span className="font-medium tracking-wide">BACK TO DASHBOARD</span>
@@ -154,7 +154,7 @@ const Guidelines = () => {
               className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 
                        hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500
                        text-black font-bold py-4 px-12 rounded-2xl transition-all duration-300 
-                       hover:scale-105 shadow-xl tracking-wide text-lg"
+                       hover:scale-105 shadow-xl tracking-wide text-lg hover:cursor-pointer"
             >
               READY TO PLAY!
             </button>
