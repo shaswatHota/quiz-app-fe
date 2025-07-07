@@ -95,7 +95,7 @@ useEffect(()=>{
 
                 </div>
                 <div className="mb-5">
-                    <div className="font-bold text-2xl"> Categories </div><br /> <p>test your general knowledge </p>
+                    <div className="font-bold text-2xl"> Categories </div><br /> <p>Choose your quiz topic </p>
                 </div>
             </Button>
             <Button from='from-yellow-400' via='via-yellow-500' to='to-yellow-600' className='text-white'  onClick={()=>handleButtons('leaderboard')}>
@@ -104,7 +104,7 @@ useEffect(()=>{
 
                 </div>
                 <div className="mb-5">
-                    <div className="font-bold text-2xl"> Leaderboard </div><br /> <p>test your general knowledge </p>
+                    <div className="font-bold text-2xl"> Leaderboard </div><br /> <p>See top performers </p>
                 </div>
             </Button>
           </div>
@@ -115,7 +115,7 @@ useEffect(()=>{
 
                 </div>
                 <div className="mb-5">
-                    <div className="font-bold text-2xl"> GuideLines </div><br /> <p>test your general knowledge </p>
+                    <div className="font-bold text-2xl"> GuideLines </div><br /> <p>Learn how to play </p>
                 </div>
             </Button>
             <Button from='from-yellow-400' via='via-yellow-500' to='to-yellow-600' className='text-white'  onClick={()=>handleButtons('profile')}>
@@ -124,7 +124,7 @@ useEffect(()=>{
 
                 </div>
                 <div className="mb-5">
-                    <div className="font-bold text-2xl"> Profile </div><br /> <p>test your general knowledge </p>
+                    <div className="font-bold text-2xl"> Profile </div><br /> <p>View your stats </p>
                 </div>
             </Button>
             <Button from='from-white' via='via-gray-50' to='to-white' className='text-black'  onClick={()=>handleButtons('settings')}>
@@ -133,7 +133,7 @@ useEffect(()=>{
 
                 </div>
                 <div className="mb-5">
-                    <div className="font-bold text-2xl"> Settings </div><br /> <p>test your general knowledge </p>
+                    <div className="font-bold text-2xl"> Settings </div><br /> <p>Customize your experience</p>
                 </div>
             </Button>
            
