@@ -10,13 +10,25 @@ import Profile from './components/Profile';
 import Categories from './components/Categories';
 import Leaderboard from './components/Leaderboard';
 import Settings from './components/Settings'
+import { useEffect, useState } from 'react';
 
 function App() {
+  
+  const [user,setUser] = useState(null);
+
+  useEffect(()=>{
+    const token = localStorage.getItem('token');
+    if(token){
+      setUser({token});
+    }
+
+  },[])
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
       <Router>
         <Routes>
+          <Route path="/" element={user? <Navigate to='/dashboard' replace/>:<Navigate to='/signin' replace/>} />
           <Route path="/signup" element={<Signup/>} />
           <Route path="/signin" element={<Signin/>} />
           <Route path="/profile" element={<Profile/>} />
