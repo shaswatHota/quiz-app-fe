@@ -36,7 +36,7 @@ function Questions(){
     .catch(err => console.error("Fetch error:", err));
     }, [quizId]);
 
-    // Function to fetch next question
+    
     const fetchNextQuestion = async () => {
         setIsLoading(true);
         try {

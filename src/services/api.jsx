@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://quiz-app-be-knz8.onrender.com',
+  baseURL: 'http://localhost:3000',
 });
 
 

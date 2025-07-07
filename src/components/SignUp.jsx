@@ -16,7 +16,7 @@ const Signup = () => {
     setLoading(true);
   
     try {
-      const res = await fetch('https://quiz-app-be-knz8.onrender.com/signup', {
+      const res = await fetch('http://localhost:3000/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username,email, password }),
