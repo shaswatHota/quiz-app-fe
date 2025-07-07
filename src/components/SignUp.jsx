@@ -16,7 +16,7 @@ const Signup = () => {
     setLoading(true);
   
     try {
-      const res = await fetch('http://localhost:3000/signup', {
+      const res = await fetch('http://https://quiz-app-be-five.vercel.app/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username,email, password }),

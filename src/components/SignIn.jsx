@@ -16,7 +16,7 @@ const Signin = () => {
     setLoading(true);
     try{
        
-        const res = await axios.post("http://localhost:3000/signin",{email, password});
+        const res = await axios.post("http://https://quiz-app-be-five.vercel.app/signin",{email, password});
         const token = res.data.token;
        if(token){
         localStorage.setItem('token', token);
