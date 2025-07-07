@@ -64,7 +64,7 @@ function Questions(){
         }
     };
 
-    // Initial question fetch
+    
     useEffect(() => {
         fetchNextQuestion();
     }, [quizId]);
@@ -117,30 +117,28 @@ async function nextQue() {
   setIsSubmitting(true);
   
   try {
-    // Submit answer
+    
     const res = await api.post(`/quiz/answer/${quizId}`, {
       questionId: question.id,
-      answer: selectedOpt || "" // Send empty string if no option selected (time's up)
+      answer: selectedOpt || "" 
     });
 
     if (res.data.result) console.log(res.data.result);
     
-    // Check if quiz is completed
+    
     if (res.data.finalStats) {
       setScore(res.data.finalStats.score);
       localStorage.removeItem("score");
       localStorage.removeItem("queCount");
       navigate(`/quiz/result/${quizId}`);
     } else {
-      // Update score if provided
+      
       if (res.data.yourScore !== undefined) {
         setScore(res.data.yourScore); 
       }
-      
-      // Increment question count
+    
       setQueCount(prev => prev + 1);
       
-      // Fetch next question
       await fetchNextQuestion();
     }
   } catch (err) {
