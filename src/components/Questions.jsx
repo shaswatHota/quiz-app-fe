@@ -26,6 +26,8 @@ function Questions(){
     const storedQueCount  = localStorage.getItem("queCount");
     return storedQueCount  ? parseInt(storedQueCount ) : 1;
     });
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
 
     useEffect(() => {
@@ -34,35 +36,43 @@ function Questions(){
     .catch(err => console.error("Fetch error:", err));
     }, [quizId]);
 
-      useEffect(() => {
-    let isMounted = true;
+    // Function to fetch next question
+    const fetchNextQuestion = async () => {
+        setIsLoading(true);
+        try {
+            const res = await api.get(`/quiz/${quizId}/next-question`);
+            if (res.data.question) {
+                setQuestion(res.data.question);
+                setTimer(totalTime); 
+                setTimesUp(false);  
+                setOptLocked(false);
+                setSelectedOpt(null);
+            } else {
+                localStorage.removeItem("score");
+                localStorage.removeItem("queCount");
+                navigate(`/quiz/result/${quizId}`);
+            }
+        } catch (err) {
+            console.error("Fetch error:", err);
+            if (err.response?.status === 404) {
+                localStorage.removeItem("score");
+                localStorage.removeItem("queCount");
+                navigate(`/quiz/result/${quizId}`);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-     api.get(`/quiz/${quizId}/next-question`)
-    .then(res => {
-      if (isMounted && res.data.question) {
-        setQuestion(res.data.question);
-        setTimer(totalTime); 
-        setTimesUp(false);  
-        setOptLocked(false);
-        setSelectedOpt(null);
-      } else {
-        
-        localStorage.removeItem("score");
-        localStorage.removeItem("queCount");
-        navigate(`/quiz/result/${quizId}`);
-      }
-    })
-    .catch(err => {
-      if (isMounted) console.error("Fetch error:", err);
-    });
-
-  return () => { isMounted = false };
-}, [quizId, queCount]);
+    // Initial question fetch
+    useEffect(() => {
+        fetchNextQuestion();
+    }, [quizId]);
 
         
     
     function handleOptClick(option){
-        if (optLocked) return;        
+        if (optLocked || isSubmitting) return;        
         setSelectedOpt(option);       
         setOptLocked(true);   
         clearInterval(timerId.current);
@@ -101,32 +111,48 @@ useEffect(() => {
 }, [score,queCount]);
 
 
-function nextQue() {
-  if (!question) return;
+async function nextQue() {
+  if (!question || isSubmitting) return;
 
+  setIsSubmitting(true);
   
-  api.post(`/quiz/answer/${quizId}`, {
-    questionId: question.id,
-    answer: selectedOpt 
-  })
-    .then((res) => {
-      if (res.data.result) console.log(res.data.result);
-      if (res.data.finalStats) {
-          setScore(res.data.finalStats.score);
-          localStorage.removeItem("score");
-          localStorage.removeItem("queCount");
-          navigate(`/quiz/result/${quizId}`);
-        } else {
-          if (res.data.yourScore !== undefined) {
-            setScore(res.data.yourScore); 
-          }
-          setQueCount(prev => prev + 1);
-        }
-
-    })
-    .catch(err => {
-      console.error("Error submitting answer:", err);
+  try {
+    // Submit answer
+    const res = await api.post(`/quiz/answer/${quizId}`, {
+      questionId: question.id,
+      answer: selectedOpt || "" // Send empty string if no option selected (time's up)
     });
+
+    if (res.data.result) console.log(res.data.result);
+    
+    // Check if quiz is completed
+    if (res.data.finalStats) {
+      setScore(res.data.finalStats.score);
+      localStorage.removeItem("score");
+      localStorage.removeItem("queCount");
+      navigate(`/quiz/result/${quizId}`);
+    } else {
+      // Update score if provided
+      if (res.data.yourScore !== undefined) {
+        setScore(res.data.yourScore); 
+      }
+      
+      // Increment question count
+      setQueCount(prev => prev + 1);
+      
+      // Fetch next question
+      await fetchNextQuestion();
+    }
+  } catch (err) {
+    console.error("Error submitting answer:", err);
+    if (err.response?.status === 404) {
+      localStorage.removeItem("score");
+      localStorage.removeItem("queCount");
+      navigate(`/quiz/result/${quizId}`);
+    }
+  } finally {
+    setIsSubmitting(false);
+  }
 }
 
 let bgColor = "from-yellow-400 to-yellow-600";
@@ -172,10 +198,11 @@ return(
             </div>
             <div className="hidden lg:flex justify-center ">
                     <button
-                     className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 hover:brightness-125 hover:cursor-pointer filter hover:shadow-yellow-400/25 hover:shadow-2xl rounded-2xl w-3xs text-black"
+                     className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 hover:brightness-125 hover:cursor-pointer filter hover:shadow-yellow-400/25 hover:shadow-2xl rounded-2xl w-3xs text-black disabled:opacity-50 disabled:cursor-not-allowed"
                      onClick={nextQue}
+                     disabled={isSubmitting || isLoading}
                     >
-                            NEXT QUESTION
+                            {isSubmitting ? "SUBMITTING..." : isLoading ? "LOADING..." : "NEXT QUESTION"}
                     </button>
             </div>
         </div>        
@@ -196,7 +223,13 @@ return(
                 </div>
                 <div className="w-14 h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent ml-3 "></div>
             </div>
-            {question?.question && (
+            
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-400 mb-4"></div>
+                    <div className="text-xl font-semibold text-yellow-400">Loading next question...</div>
+                </div>
+            ) : question?.question && (
                 <div>
                     <div className="text-xl md:text-3xl font-bold mb-5">
                         <h1>{question.question}</h1>
@@ -234,9 +267,11 @@ return(
 
     </div>
     <div className="flex justify-center lg:hidden ">
-         <div className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 hover:brightness-125 hover:cursor-pointer filter hover:shadow-yellow-400/25 hover:shadow-2xl rounded-2xl w-3xs text-black">
-                            NEXT QUESTION
-                    </div>
+         <button className="flex text-xl font-semibold p-4 justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 hover:brightness-125 hover:cursor-pointer filter hover:shadow-yellow-400/25 hover:shadow-2xl rounded-2xl w-3xs text-black disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={nextQue}
+                disabled={isSubmitting || isLoading}>
+                            {isSubmitting ? "SUBMITTING..." : isLoading ? "LOADING..." : "NEXT QUESTION"}
+                    </button>
     </div>
 
     {timesUp&&(<div className="fixed inset-0 flex justify-center items-center bg-black/80 backdrop-blur-sm">
@@ -258,9 +293,10 @@ return(
         
         <button
           onClick={nextQue}
-          className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-black font-semibold px-6 py-3 rounded-2xl hover:brightness-110 transition-all w-full hover:cursor-pointer"
+          disabled={isSubmitting || isLoading}
+          className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-black font-semibold px-6 py-3 rounded-2xl hover:brightness-110 transition-all w-full hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          NEXT QUESTION
+          {isSubmitting ? "SUBMITTING..." : isLoading ? "LOADING..." : "NEXT QUESTION"}
         </button>
       </div>
     </div>)}
