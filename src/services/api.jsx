@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://quiz-app-be-five.vercel.app',
+  baseURL: 'https://quiz-app-be-knz8.onrender.com',
 });
 
 
